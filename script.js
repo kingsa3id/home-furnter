@@ -38,6 +38,17 @@ const fallbackDetails = {
 let currentLang = 'AR';
 let currentFilterCategoryId = "cat_all";
 
+// Stable stringify helper that sorts keys to prevent JSON ordering differences from triggering re-renders!
+function stableStringify(data) {
+  if (data === null || data === undefined) return '';
+  if (typeof data !== 'object') return JSON.stringify(data);
+  if (Array.isArray(data)) {
+    return '[' + data.map(stableStringify).join(',') + ']';
+  }
+  const keys = Object.keys(data).sort();
+  return '{' + keys.map(k => JSON.stringify(k) + ':' + stableStringify(data[k])).join(',') + '}';
+}
+
 // Read from localStorage first so that admin settings load DIRECTLY without waiting for Firebase!
 let savedItems = null;
 let savedCategories = null;
@@ -66,30 +77,39 @@ function applyLanguageInterfaceLayout(lang) {
   const isAr = lang === 'AR';
   document.documentElement.lang = isAr ? 'ar' : 'fr';
   document.documentElement.dir = isAr ? 'rtl' : 'ltr';
-  if (document.getElementById('navLinkHome')) document.getElementById('navLinkHome').innerText = isAr ? 'الرئيسية' : 'Accueil';
-  if (document.getElementById('navLinkCatalog')) document.getElementById('navLinkCatalog').innerText = isAr ? 'المعرض' : 'Catalogue';
-  if (document.getElementById('navLinkContact')) document.getElementById('navLinkContact').innerText = isAr ? 'اتصل بنا' : 'Contact';
-  if (document.getElementById('filterSectionTitle')) document.getElementById('filterSectionTitle').innerText = isAr ? 'تصفح حسب الأصناف' : 'Parcourir par catégories';
-  if (document.getElementById('catalogSectionTitle')) document.getElementById('catalogSectionTitle').innerText = isAr ? 'أحدث قطع الأثاث المضافة' : 'Nos derniers produits';
-  if (document.getElementById('heroBtnText')) document.getElementById('heroBtnText').innerText = isAr ? 'تصفح المعرض الآن' : 'Découvrir le Catalogue';
-  if (document.getElementById('footerContactTitle')) document.getElementById('footerContactTitle').innerText = isAr ? 'اتصل بنا أو تفضل بزيارة صالة عرضنا' : 'Contactez-nous ou visitez notre showroom';
+  const setIfDifferent = (id, text) => {
+    const el = document.getElementById(id);
+    if (el && el.innerText !== text) el.innerText = text;
+  };
+  setIfDifferent('navLinkHome', isAr ? 'الرئيسية' : 'Accueil');
+  setIfDifferent('navLinkCatalog', isAr ? 'المعرض' : 'Catalogue');
+  setIfDifferent('navLinkContact', isAr ? 'اتصل بنا' : 'Contact');
+  setIfDifferent('filterSectionTitle', isAr ? 'تصفح حسب الأصناف' : 'Parcourir par catégories');
+  setIfDifferent('catalogSectionTitle', isAr ? 'أحدث قطع الأثاث المضافة' : 'Nos derniers produits');
+  setIfDifferent('heroBtnText', isAr ? 'تصفح المعرض الآن' : 'Découvrir le Catalogue');
+  setIfDifferent('footerContactTitle', isAr ? 'اتصل بنا أو تفضل بزيارة صالة عرضنا' : 'Contactez-nous ou visitez notre showroom');
 }
 
 function pullShowroomSettingsAndBubbles(lang) {
   const details = dbData.details || fallbackDetails;
   const logoContainer = document.getElementById('mainLogoPlace');
   if (logoContainer && details.brandName) {
-    logoContainer.innerHTML = `<span class="logo-gold">${details.brandName.substring(0,2)}</span><span class="logo-white">${details.brandName.substring(2)}</span>`;
+    const newLogoHtml = `<span class="logo-gold">${details.brandName.substring(0,2)}</span><span class="logo-white">${details.brandName.substring(2)}</span>`;
+    if (logoContainer.innerHTML !== newLogoHtml) logoContainer.innerHTML = newLogoHtml;
   }
   if (details.brandLogoBase64) {
     const hLogo = document.getElementById('headerLogoImg');
     const hrLogo = document.getElementById('heroLogoImg');
-    if (hLogo) { hLogo.src = details.brandLogoBase64; hLogo.style.display = 'block'; }
-    if (hrLogo) { hrLogo.src = details.brandLogoBase64; hrLogo.style.display = 'block'; }
+    if (hLogo && hLogo.src !== details.brandLogoBase64) { hLogo.src = details.brandLogoBase64; hLogo.style.display = 'block'; }
+    if (hrLogo && hrLogo.src !== details.brandLogoBase64) { hrLogo.src = details.brandLogoBase64; hrLogo.style.display = 'block'; }
   }
-  if (document.getElementById('heroDynamicTitle')) document.getElementById('heroDynamicTitle').innerText = details.heroTitleAr || 'أثاث فاخر يناسب ذوقك';
-  if (document.getElementById('heroDynamicDesc')) document.getElementById('heroDynamicDesc').innerText = details.heroDescAr || 'اكتشف تشكيلاتنا الراقية من أسرّة النوم وخزائن الملابس المصنوعة بأعلى جودة وعناية.';
-  if (document.getElementById('footerPhone')) document.getElementById('footerPhone').innerText = details.phoneCall || '0550000000';
+  const setTxt = (id, txt) => {
+    const el = document.getElementById(id);
+    if (el && el.innerText !== txt) el.innerText = txt;
+  };
+  setTxt('heroDynamicTitle', details.heroTitleAr || 'أثاث فاخر يناسب ذوقك');
+  setTxt('heroDynamicDesc', details.heroDescAr || 'اكتشف تشكيلاتنا الراقية من أسرّة النوم وخزائن الملابس المصنوعة بأعلى جودة وعناية.');
+  setTxt('footerPhone', details.phoneCall || '0550000000');
 
   const callBtn = document.getElementById('floatCall');
   const locationBtn = document.getElementById('floatLocation');
@@ -108,32 +128,42 @@ function generateCategoryFilterButtons(lang) {
   const container = document.getElementById('categoryFiltersContainer');
   if (!container) return;
   let categories = dbData.categories || [];
-  container.innerHTML = '';
+  
+  let tempDiv = document.createElement('div');
   categories.forEach((cat) => {
     const btn = document.createElement('button');
     btn.className = `filter-btn ${cat.id === currentFilterCategoryId ? 'active' : ''}`;
     btn.innerText = lang === 'AR' ? (cat.labelAr || cat.labelFr) : (cat.labelFr || cat.labelAr);
-    btn.addEventListener('click', () => {
-      currentFilterCategoryId = cat.id;
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      buildMainShowroomGrid(lang, currentFilterCategoryId, false);
-    });
-    container.appendChild(btn);
+    tempDiv.appendChild(btn);
   });
+  
+  // NEVER replace DOM if visual HTML structure is identical! Prevents glitching!
+  if (container.innerHTML !== tempDiv.innerHTML) {
+    container.innerHTML = tempDiv.innerHTML;
+    Array.from(container.children).forEach((btn, idx) => {
+      btn.addEventListener('click', () => {
+        currentFilterCategoryId = categories[idx].id;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        buildMainShowroomGrid(lang, currentFilterCategoryId, false);
+      });
+    });
+  }
 }
 
 function buildMainShowroomGrid(lang, filterCategoryId = "cat_all", isBackgroundUpdate = false) {
   const gridContainer = document.getElementById('mainCatalogGrid');
   if (!gridContainer) return;
-  gridContainer.innerHTML = '';
   let items = dbData.items || [];
   const details = dbData.details || { whatsapp: "213550000000" };
   if (filterCategoryId !== "cat_all") items = items.filter(p => p.category === filterCategoryId);
   if (items.length === 0) {
-    gridContainer.innerHTML = `<p style="grid-column: 1/-1; text-align:center; font-family:'Cairo'; color:#666666; padding: 40px 0; font-weight: bold;">لا توجد منتجات متوفرة حالياً.</p>`;
+    const emptyHtml = `<p style="grid-column: 1/-1; text-align:center; font-family:'Cairo'; color:#666666; padding: 40px 0; font-weight: bold;">لا توجد منتجات متوفرة حالياً.</p>`;
+    if (gridContainer.innerHTML !== emptyHtml) gridContainer.innerHTML = emptyHtml;
     return;
   }
+  
+  let tempDiv = document.createElement('div');
   items.forEach((product, index) => {
     const card = document.createElement('div');
     // If it's a background update or one of the first 8 cards, show immediately without opacity delay/glitch!
@@ -173,9 +203,14 @@ function buildMainShowroomGrid(lang, filterCategoryId = "cat_all", isBackgroundU
         card.querySelector('.order-btn').href = `https://wa.me/${details.whatsapp || '213550000000'}?text=${encodeURIComponent(`Bonjour, je suis intéressé par le produit: ${displayTitle} (Couleur: ${selectedColorName})`)}`;
       });
     });
-    gridContainer.appendChild(card);
+    tempDiv.appendChild(card);
   });
-  setupScrollAnimationTrigger();
+  
+  // NEVER replace DOM if visual structure is identical! Eliminates any glitch or blinking!
+  if (gridContainer.innerHTML !== tempDiv.innerHTML) {
+    gridContainer.innerHTML = tempDiv.innerHTML;
+    setupScrollAnimationTrigger();
+  }
 }
 
 function setupScrollAnimationTrigger() {
@@ -218,10 +253,9 @@ onValue(ref(db, 'items'), (snap) => {
   let val = snap.val();
   if (val && !Array.isArray(val)) val = Object.values(val);
   const newItems = (val && val.length > 0) ? val : fallbackCatalogue;
-  if (JSON.stringify(dbData.items) !== JSON.stringify(newItems)) {
+  if (stableStringify(dbData.items) !== stableStringify(newItems)) {
     dbData.items = newItems;
     try { localStorage.setItem('dzMobilier_saved_items', JSON.stringify(newItems)); } catch(e){}
-    // Update ONLY the catalog grid smoothly without touching headers or category buttons!
     buildMainShowroomGrid(currentLang, currentFilterCategoryId, true);
   }
 });
@@ -231,20 +265,18 @@ onValue(ref(db, 'categories'), (snap) => {
   if (val && !Array.isArray(val)) val = Object.values(val);
   if (!val || !Array.isArray(val)) val = fallbackCategories;
   if (!val.some(c => c.id === 'cat_all')) val.unshift({ id: "cat_all", labelAr: "الكل", labelFr: "Tout" });
-  if (JSON.stringify(dbData.categories) !== JSON.stringify(val)) {
+  if (stableStringify(dbData.categories) !== stableStringify(val)) {
     dbData.categories = val;
     try { localStorage.setItem('dzMobilier_saved_categories', JSON.stringify(val)); } catch(e){}
-    // Update ONLY the filter buttons without wiping the product cards!
     generateCategoryFilterButtons(currentLang);
   }
 });
 
 onValue(ref(db, 'showroomDetails'), (snap) => {
   const newDetails = snap.val() || fallbackDetails;
-  if (JSON.stringify(dbData.details) !== JSON.stringify(newDetails)) {
+  if (stableStringify(dbData.details) !== stableStringify(newDetails)) {
     dbData.details = newDetails;
     try { localStorage.setItem('dzMobilier_saved_details', JSON.stringify(newDetails)); } catch(e){}
-    // Update ONLY the header, hero, and footer text/images without wiping the product grid!
     pullShowroomSettingsAndBubbles(currentLang);
   }
 });
