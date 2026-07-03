@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم | DzMobilier</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', sans-serif; background: #f4f5f7; color: #333; margin: 0; padding: 25px; }
+        .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f5f7; z-index: 999999; display: flex; justify-content: center; align-items: center; }
+        .login-card { background: #fff; padding: 40px; border-radius: 12px; border: 1px solid #d4a359; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        .login-card h2 { color: #b0833e; margin-bottom: 25px; }
+        .admin-container { max-width: 1000px; margin: 0 auto; display: none; }
+        .admin-box { background: #fff; padding: 35px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: 1px solid #eef0f2; margin-bottom: 35px; }
+        h2 { color: #b0833e; font-size: 1.6rem; margin-top: 0; border-bottom: 2px solid #f4ece1; padding-bottom: 14px; display: flex; align-items: center; gap: 12px; margin-bottom: 25px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+        .full-width { grid-column: 1 / -1; }
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        label { font-weight: 600; color: #555; font-size: 0.95rem; }
+        input, textarea, select { width: 100%; padding: 12px 15px; background: #fff; border: 1px solid #ccc; border-radius: 6px; color: #333; font-family: 'Cairo'; font-size: 1rem; box-sizing: border-box; }
+        input[type="file"] { padding: 10px; border: 1px dashed #d4a359; }
+        .btn { background: #d4a359; color: #fff; border: none; padding: 12px 25px; border-radius: 6px; font-weight: 700; cursor: pointer; font-family: 'Cairo'; font-size: 1rem; transition: all 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn:hover { background: #2d2a26; transform: translateY(-2px); }
+        .btn-danger { background: #dc3545; padding: 7px 14px; font-size: 0.88rem; border: none; border-radius: 4px; cursor: pointer; color: #fff; margin-left: 5px; }
+        .btn-edit { background: #0d6efd; padding: 7px 14px; font-size: 0.88rem; border: none; border-radius: 4px; cursor: pointer; color: #fff; margin-left: 5px; }
+        .btn-secondary { background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid #eee; }
+        th, td { padding: 14px 18px; text-align: right; border-bottom: 1px solid #eee; vertical-align: middle; }
+        th { background: #fafafa; color: #b0833e; font-weight: 600; }
+        td img { width: 55px; height: 55px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
+        .color-picker-wrapper { background: #fafafa; padding: 15px; border-radius: 6px; border: 1px solid #ddd; }
+        .color-input-row { display: flex; gap: 10px; align-items: center; margin-bottom: 15px; }
+        input[type="color"] { border: 1px solid #ccc; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; background: none; padding: 0; }
+        .selected-colors-list { display: flex; gap: 10px; flex-wrap: wrap; min-height: 30px; align-items: center; }
+        .badge-color { display: inline-flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #ddd; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; }
+        .badge-color-dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; border: 1px solid #ccc; }
+        .badge-color-remove { cursor: pointer; color: #dc3545; font-weight: bold; }
+        .table-colors-preview { display: flex; gap: 6px; flex-wrap: wrap; }
+        .table-color-dot { width: 18px; height: 18px; border-radius: 50%; border: 1px solid #ccc; display: inline-block; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 10000; justify-content: center; align-items: center; }
+        .modal-content { background: #fff; padding: 30px; border-radius: 12px; width: 90%; max-width: 600px; border: 1px solid #d4a359; max-height: 90vh; overflow-y: auto; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .image-preview-box { width: 100px; height: 100px; border: 1px solid #ddd; border-radius: 6px; display: none; object-fit: cover; margin-top: 10px; }
+        .status-box { padding: 12px; border-radius: 6px; margin-bottom: 15px; font-weight: bold; font-size: 0.9rem; }
+        .status-ok { background: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+        .status-err { background: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
+    </style>
+</head>
+<body>
+
+<div id="loginOverlay" class="login-overlay">
+    <div class="login-card">
+        <h2><i class="fas fa-lock"></i> تسجيل دخول المسؤول</h2>
+        <div id="loginErrorMsg" style="color: #dc3545; margin-bottom: 15px; font-weight: bold; display: none;">❌ كلمة المرور خاطئة!</div>
+        <div class="form-group" style="margin-bottom: 20px; text-align: right;">
+            <label>كلمة المرور:</label>
+            <input type="password" id="loginPasswordField" placeholder="" onkeydown="if(event.key==='Enter')attemptAdminLogin()">
+        </div>
+        <button class="btn" style="width: 100%;" onclick="attemptAdminLogin()">تسجيل الدخول</button>
+    </div>
+</div>
+
+<div class="admin-container" id="adminMainContainer">
+
+    <div id="dbStatusBox" class="status-box" style="display:none;"></div>
+
+    <div class="admin-box" style="border: 1px solid #dc3545;">
+        <h2><i class="fas fa-shield-alt"></i> الحماية</h2>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>كلمة المرور الجديدة:</label>
+                <input type="password" id="newAdminPasswordInput" placeholder="اكتب كلمة المرور الجديدة">
+            </div>
+            <div class="form-group" style="display: flex; align-items: flex-end;">
+                <button class="btn" onclick="changeAdminPassword()"><i class="fas fa-key"></i> تحديث</button>
+            </div>
+        </div>
+        <div style="text-align: left;">
+            <button class="btn btn-danger" onclick="logoutAdmin()"><i class="fas fa-sign-out-alt"></i> خروج</button>
+        </div>
+    </div>
+
+    <div class="admin-box" style="border: 2px solid #d4a359; background: #fffbf5;">
+        <h2><i class="fas fa-database"></i> تهيئة قاعدة البيانات</h2>
+        <p style="color: #555; margin-bottom: 15px; line-height: 1.6;">
+            إذا كانت قاعدة البيانات فارغة (المنتجات لا تظهر)، اضغط الزر لإضافة بيانات البداية.
+        </p>
+        <button class="btn" onclick="seedInitialData()" style="font-size: 1.05rem; padding: 14px 28px;">
+            <i class="fas fa-magic"></i> إضافة بيانات البداية (منتجات تجريبية)
+        </button>
+        <p style="color: #888; margin-top: 10px; font-size: 0.85rem;">
+            يُستحسن الضغط على هذا الزر مرة واحدة فقط عند البداية.
+        </p>
+    </div>
+
+    <div class="admin-box">
+        <h2><i class="fas fa-cog"></i> 1. إعدادات الموقع واللوجو</h2>
+        <div class="form-grid">
+            <div class="form-group full-width" style="background: #fafafa; padding: 15px; border-radius: 8px; border: 1px dashed #d4a359;">
+                <label><i class="fas fa-image"></i> رفع لوجو المحل:</label>
+                <input type="file" id="setupBrandLogoFile" accept="image/*" onchange="previewLogoUpload(this)">
+                <img id="setupLogoPreview" class="image-preview-box" style="width:120px; height:120px; object-fit:contain; background:#fff; padding:5px; border:1px solid #ddd;">
+            </div>
+            <div class="form-group"><label>اسم المتجر:</label><input type="text" id="setupBrandName" placeholder="DzMobilier"></div>
+            <div class="form-group"><label>واتساب (بدون +):</label><input type="text" id="setupWhatsapp" placeholder="213550000000"></div>
+            <div class="form-group"><label>هاتف مباشر:</label><input type="text" id="setupPhoneCall" placeholder="0550000000"></div>
+            <div class="form-group"><label>رابط خرائط جوجل:</label><input type="text" id="setupGoogleMapsUrl"></div>
+            <div class="form-group full-width"><label>عنوان Hero:</label><input type="text" id="setupHeroTitleAr"></div>
+            <div class="form-group full-width"><label>وصف Hero:</label><textarea id="setupHeroDescAr" rows="3"></textarea></div>
+            <div class="form-group"><label>فيسبوك:</label><input type="text" id="setupFb"></div>
+            <div class="form-group"><label>انستغرام:</label><input type="text" id="setupInsta"></div>
+            <div class="form-group full-width"><label>تيك توك:</label><input type="text" id="setupTiktok"></div>
+        </div>
+        <button class="btn" onclick="saveShowroomSettings()"><i class="fas fa-save"></i> حفظ الإعدادات</button>
+    </div>
+
+    <div class="admin-box">
+        <h2><i class="fas fa-folder"></i> 2. الأصناف</h2>
+        <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+            <input type="text" id="newCategoryNameAr" placeholder="الصنف بالعربية" style="flex:1; padding:12px; border:1px solid #ccc; border-radius:6px; font-family:Cairo;">
+            <input type="text" id="newCategoryNameFr" placeholder="الصنف بالفرنسية" style="flex:1; padding:12px; border:1px solid #ccc; border-radius:6px; font-family:Cairo;">
+            <button class="btn" onclick="addNewCategory()"><i class="fas fa-plus"></i> إضافة</button>
+        </div>
+        <table id="categoriesTable">
+            <thead><tr><th>العربية</th><th>الفرنسية</th><th style="width: 160px; text-align: center;">إجراء</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div class="admin-box">
+        <h2><i class="fas fa-plus-square"></i> 3. إضافة منتج جديد</h2>
+        <div class="form-grid">
+            <div class="form-group"><label>الاسم (عربي):</label><input type="text" id="prodTitleAr"></div>
+            <div class="form-group"><label>الاسم (فرنسي):</label><input type="text" id="prodTitleFr"></div>
+            <div class="form-group"><label>السعر (دج):</label><input type="number" id="prodPrice"></div>
+            <div class="form-group"><label>الصنف:</label><select id="prodCategorySelect"></select></div>
+            <div class="form-group full-width">
+                <label>صورة المنتج:</label>
+                <input type="file" id="prodImgFile" accept="image/*" onchange="previewSelectedImage(this, 'creationImgPreview')">
+                <img id="creationImgPreview" class="image-preview-box">
+            </div>
+            <div class="form-group full-width">
+                <label>الألوان:</label>
+                <div class="color-picker-wrapper">
+                    <div class="color-input-row">
+                        <input type="color" id="colorPickerInput" value="#8B6239">
+                        <button type="button" class="btn" style="padding: 8px 15px; font-size:0.9rem;" onclick="addColorToCreationList()"><i class="fas fa-plus-circle"></i> إضافة لون</button>
+                    </div>
+                    <div class="selected-colors-list" id="creationColorsContainer"></div>
+                </div>
+            </div>
+        </div>
+        <button class="btn" onclick="addNewProduct()"><i class="fas fa-cloud-upload-alt"></i> نشر المنتج</button>
+    </div>
+
+    <div class="admin-box">
+        <h2><i class="fas fa-th-list"></i> 4. المنتجات المعروضة</h2>
+        <table id="productsTable">
+            <thead><tr><th>صورة</th><th>الاسم</th><th>الألوان</th><th>السعر</th><th style="width: 160px; text-align: center;">إجراء</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+</div>
+
+<div id="editProductModal" class="modal">
+    <div class="modal-content">
+        <h3 style="margin-top:0; color:#b0833e;"><i class="fas fa-edit"></i> تعديل المنتج</h3>
+        <input type="hidden" id="editProdId">
+        <div class="form-group" style="margin-bottom:15px;"><label>الاسم (عربي):</label><input type="text" id="editProdTitleAr"></div>
+        <div class="form-group" style="margin-bottom:15px;"><label>الاسم (فرنسي):</label><input type="text" id="editProdTitleFr"></div>
+        <div class="form-group" style="margin-bottom:15px;"><label>السعر:</label><input type="number" id="editProdPrice"></div>
+        <div class="form-group" style="margin-bottom:15px;"><label>الصنف:</label><select id="editProdCategorySelect"></select></div>
+        <div class="form-group" style="margin-bottom:15px;">
+            <label>تغيير الصورة (اختياري):</label>
+            <input type="file" id="editProdImgFile" accept="image/*" onchange="previewSelectedImage(this, 'modalImgPreview')">
+            <img id="modalImgPreview" class="image-preview-box" style="display:block;">
+        </div>
+        <div class="form-group" style="margin-bottom:15px;">
+            <label>الألوان:</label>
+            <div class="color-picker-wrapper">
+                <div class="color-input-row">
+                    <input type="color" id="modalColorPickerInput" value="#ffffff">
+                    <button type="button" class="btn" style="padding: 8px 15px; font-size:0.9rem;" onclick="addColorToModalList()"><i class="fas fa-plus-circle"></i> إضافة لون</button>
+                </div>
+                <div class="selected-colors-list" id="modalColorsContainer"></div>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeProductModal()">إلغاء</button>
+            <button class="btn" onclick="saveProductUpdate()">حفظ التعديل</button>
+        </div>
+    </div>
+</div>
+
+<div id="editCategoryModal" class="modal">
+    <div class="modal-content">
+        <h3 style="margin-top:0; color:#b0833e;"><i class="fas fa-edit"></i> تعديل الصنف</h3>
+        <input type="hidden" id="editCatId">
+        <div class="form-group" style="margin-bottom:15px;"><label>العربية:</label><input type="text" id="editCatLabelAr"></div>
+        <div class="form-group" style="margin-bottom:15px;"><label>الفرنسية:</label><input type="text" id="editCatLabelFr"></div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeCategoryModal()">إلغاء</button>
+            <button class="btn" onclick="saveCategoryUpdate()">حفظ</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, set, onValue, get, child } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBja7CFCWgkA9BatRobvBFsv3G5v5JNmvU",
+  authDomain: "sell-web-bed1.firebaseapp.com",
+  databaseURL: "https://sell-web-bed1-default-rtdb.firebaseio.com",
+  projectId: "sell-web-bed1",
+  storageBucket: "sell-web-bed1.firebasestorage.app",
+  messagingSenderId: "228289800494",
+  appId: "1:228289800494:web:d6e6ff6eb0c791d0dbf2bf",
+  measurementId: "G-VRF81277ED"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const itemsRef = ref(db, 'items');
+const categoriesRef = ref(db, 'categories');
+const detailsRef = ref(db, 'showroomDetails');
+
+const fallbackItems = [
+  { id: 1001, category: "cat_1", titleFr: "Lit Double Capitonnée Velours Royal", titleAr: "سرير كابيتوني ملكي مزدوج لشخصين فاخر", price: 88000, img: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=600", colors: ["#8B6239", "#000000"] },
+  { id: 1002, category: "cat_2", titleFr: "Armoire Dressing Prestige en Hêtre 6 Portes", titleAr: "خزانة ملابس فاخرة 6 أبواب من خشب الزان الأصلي", price: 165000, img: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?q=80&w=600", colors: ["#8B6239", "#FFFFFF"] }
+];
+
+const fallbackCategories = [
+  { id: "cat_1", labelAr: "أسرّة النوم", labelFr: "Lits" },
+  { id: "cat_2", labelAr: "خزائن الملابس ودريسنج", labelFr: "Armoires" }
+];
+
+const fallbackDetails = {
+  brandName: "DzMobilier",
+  heroTitleAr: "أثاث فاخر يناسب ذوقك",
+  heroDescAr: "اكتشف تشكيلاتنا الراقية من أسرّة النوم وخزائن الملابس المصنوعة بأعلى جودة وعناية.",
+  whatsapp: "213550000000",
+  phoneCall: "0550000000",
+  googleMapsUrl: "https://maps.google.com"
+};
+
+let currentlySelectedCreationColors = [];
+let currentlySelectedModalColors = [];
+let base64CreationImage = "";
+let base64ModalImage = "";
+let base64LogoImage = "";
+let mySessionId = "";
+
+/* ==================== UTILS ==================== */
+function showStatus(msg, isError) {
+  const box = document.getElementById('dbStatusBox');
+  if (!box) return;
+  box.style.display = 'block';
+  box.textContent = msg;
+  box.className = 'status-box ' + (isError ? 'status-err' : 'status-ok');
+  if (!isError) setTimeout(() => { box.style.display = 'none'; }, 5000);
+}
+
+function toArray(val) {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  return Object.values(val);
+}
+
+/* ==================== LOGIN ==================== */
+function initSystem() {
+  try {
+    if (!localStorage.getItem('dzAdminPassword')) {
+      localStorage.setItem('dzAdminPassword', 'admin123');
+    }
+    if (!localStorage.getItem('dzAdminActiveSessions')) {
+      localStorage.setItem('dzAdminActiveSessions', JSON.stringify([]));
+    }
+    if (!sessionStorage.getItem('dzMyCurrentSessionToken')) {
+      sessionStorage.setItem('dzMyCurrentSessionToken', 'sess_' + Math.random().toString(36).substr(2, 9));
+    }
+    mySessionId = sessionStorage.getItem('dzMyCurrentSessionToken');
+    verifyLoginState();
+  } catch (e) {
+    console.error('Init error:', e);
+  }
+}
+
+function verifyLoginState() {
+  try {
+    const activeSessions = JSON.parse(localStorage.getItem('dzAdminActiveSessions') || '[]');
+    const isValid = activeSessions.includes(mySessionId);
+    const loginOverlay = document.getElementById('loginOverlay');
+    const adminContainer = document.getElementById('adminMainContainer');
+    if (!loginOverlay || !adminContainer) return;
+    if (isValid) {
+      loginOverlay.style.display = 'none';
+      adminContainer.style.display = 'block';
+    } else {
+      loginOverlay.style.display = 'flex';
+      adminContainer.style.display = 'none';
+    }
+  } catch (e) {
+    console.error('Verify error:', e);
+  }
+}
+
+function attemptAdminLogin() {
+  try {
+    const inputPass = document.getElementById('loginPasswordField').value;
+    const correctPass = localStorage.getItem('dzAdminPassword') || 'admin123';
+    if (inputPass === correctPass) {
+      document.getElementById('loginErrorMsg').style.display = 'none';
+      let sessions = JSON.parse(localStorage.getItem('dzAdminActiveSessions') || '[]');
+      if (!sessions.includes(mySessionId)) sessions.push(mySessionId);
+      localStorage.setItem('dzAdminActiveSessions', JSON.stringify(sessions));
+      document.getElementById('loginPasswordField').value = '';
+      verifyLoginState();
+    } else {
+      document.getElementById('loginErrorMsg').style.display = 'block';
+    }
+  } catch (e) {
+    console.error('Login error:', e);
+  }
+}
+window.attemptAdminLogin = attemptAdminLogin;
+
+function changeAdminPassword() {
+  const newPass = document.getElementById('newAdminPasswordInput').value.trim();
+  if (newPass.length < 4) return alert('❌ 4 أحرف على الأقل!');
+  localStorage.setItem('dzAdminPassword', newPass);
+  document.getElementById('newAdminPasswordInput').value = '';
+  alert('✅ تم تعديل كلمة المرور!');
+}
+window.changeAdminPassword = changeAdminPassword;
+
+function logoutAdmin() {
+  let sessions = JSON.parse(localStorage.getItem('dzAdminActiveSessions') || '[]');
+  sessions = sessions.filter(s => s !== mySessionId);
+  localStorage.setItem('dzAdminActiveSessions', JSON.stringify(sessions));
+  verifyLoginState();
+}
+window.logoutAdmin = logoutAdmin;
+
+/* ==================== SEED DATA ==================== */
+async function seedInitialData() {
+  try {
+    const [itemsSnap, catsSnap, detSnap] = await Promise.all([
+      get(itemsRef), get(categoriesRef), get(detailsRef)
+    ]);
+    if (!itemsSnap.exists() || !catsSnap.exists() || !detSnap.exists()) {
+      const promises = [];
+      if (!itemsSnap.exists()) promises.push(set(itemsRef, fallbackItems));
+      if (!catsSnap.exists()) promises.push(set(categoriesRef, fallbackCategories));
+      if (!detSnap.exists()) promises.push(set(detailsRef, fallbackDetails));
+      await Promise.all(promises);
+      showStatus('✅ تم تهيئة البيانات الافتراضية بنجاح!');
+    } else {
+      showStatus('✅ قاعدة البيانات تحتوي على بيانات بالفعل.');
+    }
+  } catch (e) {
+    showStatus('❌ فشل التهيئة: ' + e.message, true);
+    alert('فشل الاتصال بقاعدة البيانات. تأكد من أنك وضعت قواعد Firebase للقراءة والكتابة.\n\nخطأ: ' + e.message);
+  }
+}
+window.seedInitialData = seedInitialData;
+
+/* ==================== IMAGES & COLORS ==================== */
+function previewLogoUpload(inputElement) {
+  const file = inputElement.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('setupLogoPreview').src = e.target.result;
+      document.getElementById('setupLogoPreview').style.display = 'block';
+      base64LogoImage = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+}
+window.previewLogoUpload = previewLogoUpload;
+
+function previewSelectedImage(inputElement, previewImgId) {
+  const file = inputElement.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById(previewImgId).src = e.target.result;
+      document.getElementById(previewImgId).style.display = 'block';
+      if (previewImgId === 'creationImgPreview') base64CreationImage = e.target.result;
+      if (previewImgId === 'modalImgPreview') base64ModalImage = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+}
+window.previewSelectedImage = previewSelectedImage;
+
+function addColorToCreationList() {
+  const color = document.getElementById('colorPickerInput').value;
+  if (!currentlySelectedCreationColors.includes(color)) {
+    currentlySelectedCreationColors.push(color);
+    renderCreationColors();
+  }
+}
+window.addColorToCreationList = addColorToCreationList;
+
+function removeColorFromCreationList(color) {
+  currentlySelectedCreationColors = currentlySelectedCreationColors.filter(c => c !== color);
+  renderCreationColors();
+}
+window.removeColorFromCreationList = removeColorFromCreationList;
+
+function renderCreationColors() {
+  const container = document.getElementById('creationColorsContainer');
+  container.innerHTML = '';
+  currentlySelectedCreationColors.forEach(color => {
+    container.innerHTML += '<div class="badge-color"><span class="badge-color-dot" style="background:' + color + '"></span><span>' + color.toUpperCase() + '</span><span class="badge-color-remove" onclick="removeColorFromCreationList(\'' + color + '\')">×</span></div>';
+  });
+}
+
+function addColorToModalList() {
+  const color = document.getElementById('modalColorPickerInput').value;
+  if (!currentlySelectedModalColors.includes(color)) {
+    currentlySelectedModalColors.push(color);
+    renderModalColors();
+  }
+}
+window.addColorToModalList = addColorToModalList;
+
+function removeColorFromModalList(color) {
+  currentlySelectedModalColors = currentlySelectedModalColors.filter(c => c !== color);
+  renderModalColors();
+}
+window.removeColorFromModalList = removeColorFromModalList;
+
+function renderModalColors() {
+  const container = document.getElementById('modalColorsContainer');
+  container.innerHTML = '';
+  currentlySelectedModalColors.forEach(color => {
+    container.innerHTML += '<div class="badge-color"><span class="badge-color-dot" style="background:' + color + '"></span><span>' + color.toUpperCase() + '</span><span class="badge-color-remove" onclick="removeColorFromModalList(\'' + color + '\')">×</span></div>';
+  });
+}
+
+/* ==================== SETTINGS ==================== */
+onValue(detailsRef, (snap) => {
+  const details = snap.val() || {};
+  const elBrand = document.getElementById('setupBrandName');
+  const elHero = document.getElementById('setupHeroTitleAr');
+  const elDesc = document.getElementById('setupHeroDescAr');
+  const elWa = document.getElementById('setupWhatsapp');
+  const elPh = document.getElementById('setupPhoneCall');
+  const elMap = document.getElementById('setupGoogleMapsUrl');
+  const elFb = document.getElementById('setupFb');
+  const elInsta = document.getElementById('setupInsta');
+  const elTik = document.getElementById('setupTiktok');
+  const elLogo = document.getElementById('setupLogoPreview');
+  if (elBrand) elBrand.value = details.brandName || 'DzMobilier';
+  if (elHero) elHero.value = details.heroTitleAr || 'أثاث فاخر يناسب ذوقك';
+  if (elDesc) elDesc.value = details.heroDescAr || '';
+  if (elWa) elWa.value = details.whatsapp || '213550000000';
+  if (elPh) elPh.value = details.phoneCall || '0550000000';
+  if (elMap) elMap.value = details.googleMapsUrl || '';
+  if (elFb) elFb.value = details.facebook || '';
+  if (elInsta) elInsta.value = details.instagram || '';
+  if (elTik) elTik.value = details.tiktok || '';
+  if (details.brandLogoBase64 && elLogo) {
+    elLogo.src = details.brandLogoBase64;
+    elLogo.style.display = 'block';
+    base64LogoImage = details.brandLogoBase64;
+  }
+});
+
+function saveShowroomSettings() {
+  const details = {
+    brandName: document.getElementById('setupBrandName').value.trim(),
+    heroTitleAr: document.getElementById('setupHeroTitleAr').value.trim(),
+    heroDescAr: document.getElementById('setupHeroDescAr').value.trim(),
+    whatsapp: document.getElementById('setupWhatsapp').value.trim(),
+    phoneCall: document.getElementById('setupPhoneCall').value.trim(),
+    googleMapsUrl: document.getElementById('setupGoogleMapsUrl').value.trim(),
+    facebook: document.getElementById('setupFb').value.trim(),
+    instagram: document.getElementById('setupInsta').value.trim(),
+    tiktok: document.getElementById('setupTiktok').value.trim()
+  };
+  if (base64LogoImage) details.brandLogoBase64 = base64LogoImage;
+  set(detailsRef, details)
+    .then(() => showStatus('✅ تم حفظ الإعدادات!'))
+    .catch(e => { showStatus('❌ فشل الحفظ: ' + e.message, true); alert('فشل الحفظ: ' + e.message); });
+}
+window.saveShowroomSettings = saveShowroomSettings;
+
+/* ==================== CATEGORIES ==================== */
+function renderCategoriesList(categories) {
+  const tbody = document.querySelector('#categoriesTable tbody');
+  const select = document.getElementById('prodCategorySelect');
+  const editSelect = document.getElementById('editProdCategorySelect');
+  if (tbody) tbody.innerHTML = '';
+  if (select) select.innerHTML = '';
+  if (editSelect) editSelect.innerHTML = '';
+  categories.forEach(cat => {
+    if (cat.id === 'cat_all') return;
+    if (tbody) tbody.innerHTML += '<tr><td><strong>' + cat.labelAr + '</strong></td><td>' + cat.labelFr + '</td><td style="text-align:center;"><button class="btn-edit" onclick="openCategoryModal(\'' + cat.id + '\', \'' + cat.labelAr + '\', \'' + cat.labelFr + '\')"><i class="fas fa-edit"></i></button><button class="btn-danger" onclick="deleteCategory(\'' + cat.id + '\')"><i class="fas fa-trash"></i></button></td></tr>';
+    if (select) select.innerHTML += '<option value="' + cat.id + '">' + cat.labelAr + '</option>';
+    if (editSelect) editSelect.innerHTML += '<option value="' + cat.id + '">' + cat.labelAr + '</option>';
+  });
+}
+
+onValue(categoriesRef, (snap) => {
+  const val = toArray(snap.val());
+  renderCategoriesList(val);
+  if (val.length === 0) {
+    showStatus('⚠️ لا توجد أصناف. اضغط "إضافة بيانات البداية" أو أضف صنفاً جديداً.', true);
+  }
+});
+
+function addNewCategory() {
+  const arName = document.getElementById('newCategoryNameAr').value.trim();
+  const frName = document.getElementById('newCategoryNameFr').value.trim();
+  if (!arName || !frName) return alert('أدخل الاسم باللغتين!');
+  get(categoriesRef).then((snap) => {
+    let categories = toArray(snap.val());
+    categories.push({ id: 'cat_' + Date.now(), labelAr: arName, labelFr: frName });
+    set(categoriesRef, categories)
+      .then(() => {
+        document.getElementById('newCategoryNameAr').value = '';
+        document.getElementById('newCategoryNameFr').value = '';
+      })
+      .catch(e => alert('❌ فشل الحفظ: ' + e.message));
+  }).catch(e => alert('❌ فشل القراءة: ' + e.message));
+}
+window.addNewCategory = addNewCategory;
+
+function openCategoryModal(id, labelAr, labelFr) {
+  document.getElementById('editCatId').value = id;
+  document.getElementById('editCatLabelAr').value = labelAr;
+  document.getElementById('editCatLabelFr').value = labelFr;
+  document.getElementById('editCategoryModal').style.display = 'flex';
+}
+window.openCategoryModal = openCategoryModal;
+
+function closeCategoryModal() { document.getElementById('editCategoryModal').style.display = 'none'; }
+window.closeCategoryModal = closeCategoryModal;
+
+function saveCategoryUpdate() {
+  const id = document.getElementById('editCatId').value;
+  const labelAr = document.getElementById('editCatLabelAr').value.trim();
+  const labelFr = document.getElementById('editCatLabelFr').value.trim();
+  get(categoriesRef).then((snap) => {
+    let categories = toArray(snap.val());
+    categories = categories.map(c => c.id === id ? { ...c, labelAr, labelFr } : c);
+    set(categoriesRef, categories)
+      .then(() => closeCategoryModal())
+      .catch(e => alert('❌ فشل الحفظ: ' + e.message));
+  }).catch(e => alert('❌ فشل القراءة: ' + e.message));
+}
+window.saveCategoryUpdate = saveCategoryUpdate;
+
+function deleteCategory(id) {
+  if (!confirm('هل أنت متأكد؟')) return;
+  get(categoriesRef).then((snap) => {
+    let categories = toArray(snap.val());
+    categories = categories.filter(c => c.id !== id);
+    set(categoriesRef, categories).catch(e => alert('❌ فشل الحذف: ' + e.message));
+  }).catch(e => alert('❌ فشل القراءة: ' + e.message));
+}
+window.deleteCategory = deleteCategory;
+
+/* ==================== PRODUCTS ==================== */
+function renderProductsList(items) {
+  const tbody = document.querySelector('#productsTable tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  if (items.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888; padding:30px;">لا توجد منتجات. اضغط "إضافة بيانات البداية" أو أضف منتجاً جديداً.</td></tr>';
+    return;
+  }
+  items.forEach(product => {
+    let colorsHtml = '<div class="table-colors-preview">';
+    if (product.colors && product.colors.length > 0) {
+      product.colors.forEach(c => { colorsHtml += '<span class="table-color-dot" style="background-color:' + c + '"></span>'; });
+    } else { colorsHtml += 'لا يوجد'; }
+    colorsHtml += '</div>';
+    tbody.innerHTML += '<tr><td><img src="' + product.img + '" onerror="this.src=\'https://via.placeholder.com/55?text=No+Img\'"></td><td><strong>' + product.titleAr + '</strong></td><td>' + colorsHtml + '</td><td><span style="color:#b0833e; font-weight:bold;">' + parseFloat(product.price).toLocaleString() + ' دج</span></td><td style="text-align:center;"><button class="btn-edit" onclick="openProductModal(' + product.id + ')"><i class="fas fa-edit"></i></button><button class="btn-danger" onclick="deleteProduct(' + product.id + ')"><i class="fas fa-trash"></i></button></td></tr>';
+  });
+}
+
+onValue(itemsRef, (snap) => {
+  const items = toArray(snap.val());
+  renderProductsList(items);
+});
+
+function addNewProduct() {
+  const titleAr = document.getElementById('prodTitleAr').value.trim();
+  const titleFr = document.getElementById('prodTitleFr').value.trim();
+  const price = parseFloat(document.getElementById('prodPrice').value);
+  const category = document.getElementById('prodCategorySelect').value;
+  if (!titleAr || !price || !base64CreationImage || !category) return alert('أكمل البيانات واختر صورة!');
+  get(itemsRef).then((snap) => {
+    let items = toArray(snap.val());
+    const productColors = currentlySelectedCreationColors.length > 0 ? [...currentlySelectedCreationColors] : ['#8B6239'];
+    items.unshift({ id: Date.now(), category, titleAr, titleFr, price, img: base64CreationImage, colors: productColors });
+    set(itemsRef, items)
+      .then(() => {
+        document.getElementById('prodTitleAr').value = '';
+        document.getElementById('prodTitleFr').value = '';
+        document.getElementById('prodPrice').value = '';
+        document.getElementById('prodImgFile').value = '';
+        document.getElementById('creationImgPreview').style.display = 'none';
+        base64CreationImage = '';
+        currentlySelectedCreationColors = [];
+        renderCreationColors();
+        showStatus('✨ تم إضافة المنتج!');
+      })
+      .catch(e => alert('❌ فشل النشر: ' + e.message));
+  }).catch(e => alert('❌ فشل القراءة: ' + e.message));
+}
+window.addNewProduct = addNewProduct;
+
+function openProductModal(id) {
+  get(itemsRef).then((snap) => {
+    let items = toArray(snap.val());
+    const prod = items.find(p => p.id === id);
+    if (!prod) return;
+    document.getElementById('editProdId').value = prod.id;
+    document.getElementById('editProdTitleAr').value = prod.titleAr || '';
+    document.getElementById('editProdTitleFr').value = prod.titleFr || '';
+    document.getElementById('editProdPrice').value = prod.price || '';
+    document.getElementById('editProdCategorySelect').value = prod.category || '';
+    document.getElementById('modalImgPreview').src = prod.img || '';
+    base64ModalImage = prod.img || '';
+    document.getElementById('editProdImgFile').value = '';
+    currentlySelectedModalColors = prod.colors ? [...prod.colors] : ['#8B6239'];
+    renderModalColors();
+    document.getElementById('editProductModal').style.display = 'flex';
+  }).catch(e => alert('❌ فشل القراءة: ' + e.message));
+}
+window.openProductModal = openProductModal;
+
+function closeProductModal() { document.getElementById('editProductModal').style.display = 'none'; }
+window.closeProductModal = closeProductModal;
+
+function saveProductUpdate() {
+  const id = parseInt(document.getElementById('editProdId').value);
+  const titleAr = document.getElementById('editProdTitleAr').value.trim();
+  const titleFr = document.getElementById('editProdTitleFr').value.trim();
+  const price = parseFloat(document.getElementById('editProdPrice').value);
+  const category = document.getElementById('editProdCategorySelect').value;
+  get(itemsRef).then((snap) => {
+    let items = toArray(snap.val());
+    items = items.map(p => p.id === id ? { ...p, titleAr, titleFr, price, category, img: base64ModalImage || p.img, colors: currentlySelectedModalColors.length > 0 ? currentlySelectedModalColors : ['#8B6239'] } : p);
+    set(itemsRef, items)
+      .then(() => {
+        closeProductModal();
+        showStatus('✅ تم التعديل!');
+      })
+      .catch(e => alert('❌ فشل الحفظ: ' + e.message));
+  }).catch(e => alert('❌ فشل القراءة: ' + e.message));
+}
+window.saveProductUpdate = saveProductUpdate;
+
+function deleteProduct(id) {
+  if (!confirm('حذف نهائي؟')) return;
+  get(itemsRef).then((snap) => {
+    let items = toArray(snap.val());
+    items = items.filter(p => p.id !== id);
+    set(itemsRef, items)
+      .then(() => showStatus('✅ تم الحذف'))
+      .catch(e => alert('❌ فشل الحذف: ' + e.message));
+  }).catch(e => alert('❌ فشل القراءة: ' + e.message));
+}
+window.deleteProduct = deleteProduct;
+
+/* ==================== INIT ==================== */
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initSystem);
+} else {
+  initSystem();
+}
+</script>
+</body>
+</html>
