@@ -87,7 +87,7 @@ function applyLanguageInterfaceLayout(lang) {
   setIfDifferent('filterSectionTitle', isAr ? 'تصفح حسب الأصناف' : 'Parcourir par catégories');
   setIfDifferent('catalogSectionTitle', isAr ? 'أحدث قطع الأثاث المضافة' : 'Nos derniers produits');
   setIfDifferent('heroBtnText', isAr ? 'تصفح المعرض الآن' : 'Découvrir le Catalogue');
-  setIfDifferent('footerContactTitle', isAr ? 'اتصل بنا أو تفضل بزيارة صالة عرضنا' : 'Contactez-nous ou visitez notre showroom');
+  setIfDifferent('footerContactTitle', isAr ? 'اتصل بنا أو تفضل بزيارة صالة عرضنا' : 'Contactez-nous أو visitez notre showroom');
 }
 
 function pullShowroomSettingsAndBubbles(lang) {
@@ -151,6 +151,30 @@ function generateCategoryFilterButtons(lang) {
   }
 }
 
+function attachColorDotListeners() {
+  const cards = document.querySelectorAll('.product-card');
+  const details = dbData.details || { whatsapp: "213550000000" };
+  cards.forEach(card => {
+    const dots = card.querySelectorAll('.color-dot');
+    const titleEl = card.querySelector('.product-title');
+    const displayTitle = titleEl ? titleEl.innerText : '';
+    dots.forEach(dot => {
+      if (dot._hasClickListener) return;
+      dot._hasClickListener = true;
+      dot.addEventListener('click', (e) => {
+        dots.forEach(d => { d.style.border = '1px solid rgba(0,0,0,0.15)'; d.style.transform = 'scale(1)'; });
+        e.target.style.border = '2px solid #2d2a26';
+        e.target.style.transform = 'scale(1.15)';
+        let selectedColorName = e.target.getAttribute('data-color-name') || e.target.style.backgroundColor;
+        const orderBtn = card.querySelector('.order-btn');
+        if (orderBtn) {
+          orderBtn.href = `https://wa.me/${details.whatsapp || '213550000000'}?text=${encodeURIComponent(`Bonjour, je suis intéressé par le produit: ${displayTitle} (Couleur: ${selectedColorName})`)}`;
+        }
+      });
+    });
+  });
+}
+
 function buildMainShowroomGrid(lang, filterCategoryId = "cat_all", isBackgroundUpdate = false) {
   const gridContainer = document.getElementById('mainCatalogGrid');
   if (!gridContainer) return;
@@ -184,7 +208,7 @@ function buildMainShowroomGrid(lang, filterCategoryId = "cat_all", isBackgroundU
     }
     let whatsappMessage = `Bonjour, je suis intéressé par le produit: ${displayTitle} (Couleur: ${initialSelectedColor})`;
     card.innerHTML = `
-      <div class="product-img-wrapper"><img src="${product.img}" class="product-img" loading="lazy" onerror="this.src='https://via.placeholder.com/400x300?text=DzMobilier'"></div>
+      <div class="product-img-wrapper"><img src="${product.img}" class="product-img" loading="lazy" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"400\" height=\"300\" viewBox=\"0 0 400 300\"><rect width=\"100%\" height=\"100%\" fill=\"%23f5f5f3\"/><text x=\"50%\" y=\"50%\" font-family=\"sans-serif\" font-size=\"20\" font-weight=\"bold\" fill=\"%238c6239\" dominant-baseline=\"middle\" text-anchor=\"middle\">Le Rois DU lit</text></svg>';"></div>
       <div class="product-info">
         <h3 class="product-title">${displayTitle}</h3>
         ${colorDotsHtml}
@@ -193,16 +217,6 @@ function buildMainShowroomGrid(lang, filterCategoryId = "cat_all", isBackgroundU
           <a href="https://wa.me/${details.whatsapp || '213550000000'}?text=${encodeURIComponent(whatsappMessage)}" target="_blank" class="order-btn">${orderButtonText}</a>
         </div>
       </div>`;
-    const dots = card.querySelectorAll('.color-dot');
-    dots.forEach(dot => {
-      dot.addEventListener('click', (e) => {
-        dots.forEach(d => { d.style.border = '1px solid rgba(0,0,0,0.15)'; d.style.transform = 'scale(1)'; });
-        e.target.style.border = '2px solid #2d2a26';
-        e.target.style.transform = 'scale(1.15)';
-        let selectedColorName = e.target.getAttribute('data-color-name');
-        card.querySelector('.order-btn').href = `https://wa.me/${details.whatsapp || '213550000000'}?text=${encodeURIComponent(`Bonjour, je suis intéressé par le produit: ${displayTitle} (Couleur: ${selectedColorName})`)}`;
-      });
-    });
     tempDiv.appendChild(card);
   });
   
@@ -211,6 +225,7 @@ function buildMainShowroomGrid(lang, filterCategoryId = "cat_all", isBackgroundU
     gridContainer.innerHTML = tempDiv.innerHTML;
     setupScrollAnimationTrigger();
   }
+  attachColorDotListeners();
 }
 
 function setupScrollAnimationTrigger() {
