@@ -7,6 +7,16 @@
     <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DzMobilier | أثاث فاخر يناسب ذوقك</title>
+    <script>
+    (function() {
+      try {
+        if (localStorage.getItem('dzMobilierLang') === 'FR') {
+          document.documentElement.lang = 'fr';
+          document.documentElement.dir = 'ltr';
+        }
+      } catch(e) {}
+    })();
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -148,6 +158,123 @@
         </div>
         <p style="margin-top: 30px; font-size: 0.85rem; color: #888888;">© 2026 DzMobilier. All Rights Reserved.</p>
     </footer>
-    <script type="module" src="script.js?v=4"></script>
-</body>
+    <script>
+    (function() {
+        try {
+            var details = JSON.parse(localStorage.getItem('dzMobilier_saved_details'));
+            if (details) {
+                var logoPlace = document.getElementById('mainLogoPlace');
+                if (logoPlace && details.brandName) {
+                    logoPlace.innerHTML = '<span class="logo-gold">' + details.brandName.substring(0,2) + '</span><span class="logo-white">' + details.brandName.substring(2) + '</span>';
+                }
+                if (details.brandLogoBase64) {
+                    var hLogo = document.getElementById('headerLogoImg');
+                    var hrLogo = document.getElementById('heroLogoImg');
+                    if (hLogo) { hLogo.src = details.brandLogoBase64; hLogo.style.display = 'block'; }
+                    if (hrLogo) { hrLogo.src = details.brandLogoBase64; hrLogo.style.display = 'block'; }
+                }
+                if (document.getElementById('heroDynamicTitle') && details.heroTitleAr) document.getElementById('heroDynamicTitle').innerText = details.heroTitleAr;
+                if (document.getElementById('heroDynamicDesc') && details.heroDescAr) document.getElementById('heroDynamicDesc').innerText = details.heroDescAr;
+                if (document.getElementById('footerPhone') && details.phoneCall) document.getElementById('footerPhone').innerText = details.phoneCall;
+    <script>
+    (function() {
+        try {
+            var lang = localStorage.getItem('dzMobilierLang') || 'AR';
+            if (lang === 'FR') {
+                var setTxt = function(id, txt) { var el = document.getElementById(id); if (el) el.innerText = txt; };
+                setTxt('navLinkHome', 'Accueil');
+                setTxt('navLinkCatalog', 'Catalogue');
+                setTxt('navLinkContact', 'Contact');
+                setTxt('filterSectionTitle', 'Parcourir par catégories');
+                setTxt('catalogSectionTitle', 'Nos derniers produits');
+                setTxt('heroBtnText', 'Découvrir le Catalogue');
+                setTxt('footerContactTitle', 'Contactez-nous ou visitez notre showroom');
+            }
+            var details = JSON.parse(localStorage.getItem('dzMobilier_saved_details'));
+            if (details) {
+                var logoPlace = document.getElementById('mainLogoPlace');
+                if (logoPlace && details.brandName) {
+                    logoPlace.innerHTML = '<span class="logo-gold">' + details.brandName.substring(0,2) + '</span><span class="logo-white">' + details.brandName.substring(2) + '</span>';
+                }
+                if (details.brandLogoBase64) {
+                    var hLogo = document.getElementById('headerLogoImg');
+                    var hrLogo = document.getElementById('heroLogoImg');
+                    if (hLogo) { hLogo.src = details.brandLogoBase64; hLogo.style.display = 'block'; }
+                    if (hrLogo) { hrLogo.src = details.brandLogoBase64; hrLogo.style.display = 'block'; }
+                }
+                if (document.getElementById('heroDynamicTitle') && details.heroTitleAr) document.getElementById('heroDynamicTitle').innerText = details.heroTitleAr;
+                if (document.getElementById('heroDynamicDesc') && details.heroDescAr) document.getElementById('heroDynamicDesc').innerText = details.heroDescAr;
+                if (document.getElementById('footerPhone') && details.phoneCall) document.getElementById('footerPhone').innerText = details.phoneCall;
+            }
+            var categories = JSON.parse(localStorage.getItem('dzMobilier_saved_categories'));
+            var container = document.getElementById('categoryFiltersContainer');
+            if (categories && Array.isArray(categories) && container && categories.length > 0) {
+                var html = '';
+                for (var i = 0; i < categories.length; i++) {
+                    var cat = categories[i];
+                    var activeClass = (i === 0 || cat.id === 'cat_all') ? 'active' : '';
+                    var label = lang === 'AR' ? (cat.labelAr || cat.labelFr) : (cat.labelFr || cat.labelAr);
+                    html += '<button class="filter-btn ' + activeClass + '">' + label + '</button>';
+                }
+                container.innerHTML = html;
+            }
+            var items = JSON.parse(localStorage.getItem('dzMobilier_saved_items'));
+            var grid = document.getElementById('mainCatalogGrid');
+            if (items && Array.isArray(items) && grid && items.length > 0) {
+                var html = '';
+                var detailsObj = details || { whatsapp: "213550000000" };
+                for (var i = 0; i < items.length; i++) {
+                    var prod = items[i];
+                    var title = lang === 'AR' ? (prod.titleAr || prod.titleFr) : (prod.titleFr || prod.titleAr);
+                    var orderText = lang === 'AR' ? '<i class="fab fa-whatsapp"></i> طلب الآن' : '<i class="fab fa-whatsapp"></i> Commander';
+                    var price = parseFloat(prod.price || 0).toLocaleString('fr-DZ') + ' دج';
+                    var colHtml = '';
+                    var firstCol = "غير محدد";
+                    if (prod.colors && prod.colors.length > 0) {
+                        firstCol = prod.colors[0];
+                        colHtml = '<div class="product-colors">';
+                        for (var c = 0; c < prod.colors.length; c++) {
+                            var col = prod.colors[c];
+                            var act = c === 0 ? 'border: 2px solid #2d2a26; transform: scale(1.15);' : 'border: 1px solid rgba(0,0,0,0.15);';
+                            colHtml += '<span class="color-dot" data-color-name="' + col + '" style="background-color: ' + col + '; ' + act + '"></span>';
+                        }
+                        colHtml += '</div>';
+                    }
+                    var waMsg = 'Bonjour, je suis intéressé par le produit: ' + title + ' (Couleur: ' + firstCol + ')';
+                    html += '<div class="product-card animate-visible" style="opacity:1; transform:translateY(0);"><div class="product-img-wrapper"><img src="' + prod.img + '" class="product-img" loading="lazy" onerror="this.onerror=null;this.src=\'data:image/svg+xml;utf8,<svg xmlns=\\\"http://www.w3.org/2000/svg\\\" width=\\\"400\\\" height=\\\"300\\\" viewBox=\\\"0 0 400 300\\\"><rect width=\\\"100%\\\" height=\\\"100%\\\" fill=\\\"%23f5f5f3\\\"/><text x=\\\"50%\\\" y=\\\"50%\\\" font-family=\\\"sans-serif\\\" font-size=\\\"20\\\" font-weight=\\\"bold\\\" fill=\\\"%238c6239\\\" dominant-baseline=\\\"middle\\\" text-anchor=\\\"middle\\\">Le Rois DU lit</text></svg>\';"></div><div class="product-info"><h3 class="product-title">' + title + '</h3>' + colHtml + '<div class="product-meta"><span class="product-price">' + price + '</span><a href="https://wa.me/' + (detailsObj.whatsapp || '213550000000') + '?text=' + encodeURIComponent(waMsg) + '" target="_blank" class="order-btn">' + orderText + '</a></div></div></div>';
+                }
+                grid.innerHTML = html;
+                
+                var allCards = grid.querySelectorAll('.product-card');
+                for (var cardIdx = 0; cardIdx < allCards.length; cardIdx++) {
+                    (function(currentCard) {
+                        var dots = currentCard.querySelectorAll('.color-dot');
+                        var titleEl = currentCard.querySelector('.product-title');
+                        var dispTitle = titleEl ? titleEl.innerText : '';
+                        for (var dotIdx = 0; dotIdx < dots.length; dotIdx++) {
+                            (function(dot) {
+                                dot.addEventListener('click', function(e) {
+                                    for (var d = 0; d < dots.length; d++) {
+                                        dots[d].style.border = '1px solid rgba(0,0,0,0.15)';
+                                        dots[d].style.transform = 'scale(1)';
+                                    }
+                                    dot.style.border = '2px solid #2d2a26';
+                                    dot.style.transform = 'scale(1.15)';
+                                    var selCol = dot.getAttribute('data-color-name') || dot.style.backgroundColor;
+                                    var obtn = currentCard.querySelector('.order-btn');
+                                    if (obtn) {
+                                        var newMsg = 'Bonjour, je suis intéressé par le produit: ' + dispTitle + ' (Couleur: ' + selCol + ')';
+                                        obtn.href = 'https://wa.me/' + (detailsObj.whatsapp || '213550000000') + '?text=' + encodeURIComponent(newMsg);
+                                    }
+                                });
+                            })(dots[dotIdx]);
+                        }
+                    })(allCards[cardIdx]);
+                }
+            }
+        } catch(e) {}
+    })();
+    </script>
+    <script type="module" src="script.js?v=6"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a15882140a8b2826',t:'MTc4MzEwOTE1OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
