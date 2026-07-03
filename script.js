@@ -36,7 +36,12 @@ const fallbackDetails = {
 };
 
 let currentLang = 'AR';
-let dbData = { items: null, categories: null, details: null };
+let currentFilterCategoryId = "cat_all";
+let dbData = { 
+  items: fallbackCatalogue, 
+  categories: fallbackCategories, 
+  details: fallbackDetails 
+};
 
 /* ========== LOADING STATE ========== */
 function showLoading() {
@@ -69,8 +74,8 @@ function pullShowroomSettingsAndBubbles(lang) {
     if (hLogo) { hLogo.src = details.brandLogoBase64; hLogo.style.display = 'block'; }
     if (hrLogo) { hrLogo.src = details.brandLogoBase64; hrLogo.style.display = 'block'; }
   }
-  if (document.getElementById('heroDynamicTitle')) document.getElementById('heroDynamicTitle').innerText = details.heroTitleAr;
-  if (document.getElementById('heroDynamicDesc')) document.getElementById('heroDynamicDesc').innerText = details.heroDescAr;
+  if (document.getElementById('heroDynamicTitle')) document.getElementById('heroDynamicTitle').innerText = details.heroTitleAr || 'أثاث فاخر يناسب ذوقك';
+  if (document.getElementById('heroDynamicDesc')) document.getElementById('heroDynamicDesc').innerText = details.heroDescAr || 'اكتشف تشكيلاتنا الراقية من أسرّة النوم وخزائن الملابس المصنوعة بأعلى جودة وعناية.';
   if (document.getElementById('footerPhone')) document.getElementById('footerPhone').innerText = details.phoneCall || '0550000000';
 
   const callBtn = document.getElementById('floatCall');
@@ -91,14 +96,15 @@ function generateCategoryFilterButtons(lang) {
   if (!container) return;
   let categories = dbData.categories || [];
   container.innerHTML = '';
-  categories.forEach((cat, idx) => {
+  categories.forEach((cat) => {
     const btn = document.createElement('button');
-    btn.className = `filter-btn ${idx === 0 ? 'active' : ''}`;
+    btn.className = `filter-btn ${cat.id === currentFilterCategoryId ? 'active' : ''}`;
     btn.innerText = lang === 'AR' ? (cat.labelAr || cat.labelFr) : (cat.labelFr || cat.labelAr);
     btn.addEventListener('click', () => {
+      currentFilterCategoryId = cat.id;
       document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      buildMainShowroomGrid(lang, cat.id);
+      buildMainShowroomGrid(lang, currentFilterCategoryId);
     });
     container.appendChild(btn);
   });
@@ -160,12 +166,14 @@ function buildMainShowroomGrid(lang, filterCategoryId = "cat_all") {
 
 function setupScrollAnimationTrigger() {
   const cards = document.querySelectorAll('.product-card');
-  const observer = new IntersectionObserver((entries) => {
+  const observer = new IntersectionObserver((entries, obs) => {
     entries.forEach(entry => {
-      if (entry.isIntersecting) entry.target.classList.add('animate-visible');
-      else entry.target.classList.remove('animate-visible');
+      if (entry.isIntersecting) {
+        entry.target.classList.add('animate-visible');
+        obs.unobserve(entry.target);
+      }
     });
-  }, { root: null, rootMargin: '0px', threshold: 0.15 });
+  }, { root: null, rootMargin: '50px', threshold: 0.05 });
   cards.forEach(card => observer.observe(card));
 }
 
@@ -174,33 +182,10 @@ function render() {
   applyLanguageInterfaceLayout(currentLang);
   pullShowroomSettingsAndBubbles(currentLang);
   generateCategoryFilterButtons(currentLang);
-  buildMainShowroomGrid(currentLang, "cat_all");
+  buildMainShowroomGrid(currentLang, currentFilterCategoryId);
 }
 
 /* ========== INIT ========== */
-showLoading();
-
-onValue(ref(db, 'items'), (snap) => {
-  let val = snap.val();
-  if (val && !Array.isArray(val)) val = Object.values(val);
-  dbData.items = (val && val.length > 0) ? val : fallbackCatalogue;
-  render();
-});
-
-onValue(ref(db, 'categories'), (snap) => {
-  let val = snap.val();
-  if (val && !Array.isArray(val)) val = Object.values(val);
-  if (!val || !Array.isArray(val)) val = fallbackCategories;
-  if (!val.some(c => c.id === 'cat_all')) val.unshift({ id: "cat_all", labelAr: "الكل", labelFr: "Tout" });
-  dbData.categories = val;
-  render();
-});
-
-onValue(ref(db, 'showroomDetails'), (snap) => {
-  dbData.details = snap.val() || fallbackDetails;
-  render();
-});
-
 const langSelect = document.getElementById('langSelect');
 if (langSelect) {
   currentLang = localStorage.getItem('dzMobilierLang') || 'AR';
@@ -211,3 +196,35 @@ if (langSelect) {
     render();
   });
 }
+
+// Render immediately using fallbacks so there is ZERO waiting or flickering on load!
+render();
+
+onValue(ref(db, 'items'), (snap) => {
+  let val = snap.val();
+  if (val && !Array.isArray(val)) val = Object.values(val);
+  const newItems = (val && val.length > 0) ? val : fallbackCatalogue;
+  if (JSON.stringify(dbData.items) !== JSON.stringify(newItems)) {
+    dbData.items = newItems;
+    render();
+  }
+});
+
+onValue(ref(db, 'categories'), (snap) => {
+  let val = snap.val();
+  if (val && !Array.isArray(val)) val = Object.values(val);
+  if (!val || !Array.isArray(val)) val = fallbackCategories;
+  if (!val.some(c => c.id === 'cat_all')) val.unshift({ id: "cat_all", labelAr: "الكل", labelFr: "Tout" });
+  if (JSON.stringify(dbData.categories) !== JSON.stringify(val)) {
+    dbData.categories = val;
+    render();
+  }
+});
+
+onValue(ref(db, 'showroomDetails'), (snap) => {
+  const newDetails = snap.val() || fallbackDetails;
+  if (JSON.stringify(dbData.details) !== JSON.stringify(newDetails)) {
+    dbData.details = newDetails;
+    render();
+  }
+});
