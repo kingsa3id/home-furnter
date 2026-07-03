@@ -37,10 +37,23 @@ const fallbackDetails = {
 
 let currentLang = 'AR';
 let currentFilterCategoryId = "cat_all";
+
+// Read from localStorage first so that admin settings load DIRECTLY without waiting for Firebase!
+let savedItems = null;
+let savedCategories = null;
+let savedDetails = null;
+try {
+  savedItems = JSON.parse(localStorage.getItem('dzMobilier_saved_items'));
+  savedCategories = JSON.parse(localStorage.getItem('dzMobilier_saved_categories'));
+  savedDetails = JSON.parse(localStorage.getItem('dzMobilier_saved_details'));
+} catch (e) {
+  console.log('Error reading localStorage cache:', e);
+}
+
 let dbData = { 
-  items: fallbackCatalogue, 
-  categories: fallbackCategories, 
-  details: fallbackDetails 
+  items: (savedItems && Array.isArray(savedItems) && savedItems.length > 0) ? savedItems : fallbackCatalogue, 
+  categories: (savedCategories && Array.isArray(savedCategories) && savedCategories.length > 0) ? savedCategories : fallbackCategories, 
+  details: (savedDetails && typeof savedDetails === 'object') ? savedDetails : fallbackDetails 
 };
 
 /* ========== LOADING STATE ========== */
@@ -104,13 +117,13 @@ function generateCategoryFilterButtons(lang) {
       currentFilterCategoryId = cat.id;
       document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      buildMainShowroomGrid(lang, currentFilterCategoryId);
+      buildMainShowroomGrid(lang, currentFilterCategoryId, false);
     });
     container.appendChild(btn);
   });
 }
 
-function buildMainShowroomGrid(lang, filterCategoryId = "cat_all") {
+function buildMainShowroomGrid(lang, filterCategoryId = "cat_all", isBackgroundUpdate = false) {
   const gridContainer = document.getElementById('mainCatalogGrid');
   if (!gridContainer) return;
   gridContainer.innerHTML = '';
@@ -123,7 +136,8 @@ function buildMainShowroomGrid(lang, filterCategoryId = "cat_all") {
   }
   items.forEach((product, index) => {
     const card = document.createElement('div');
-    card.className = 'product-card';
+    // If it's a background update or one of the first 8 cards, show immediately without opacity delay/glitch!
+    card.className = (isBackgroundUpdate || index < 8) ? 'product-card animate-visible' : 'product-card';
     card.style.setProperty('--card-delay', `${index * 0.05}s`);
     let displayTitle = lang === 'AR' ? (product.titleAr || product.titleFr) : (product.titleFr || product.titleAr);
     let orderButtonText = lang === 'AR' ? '<i class="fab fa-whatsapp"></i> طلب الآن' : '<i class="fab fa-whatsapp"></i> Commander';
@@ -182,7 +196,7 @@ function render() {
   applyLanguageInterfaceLayout(currentLang);
   pullShowroomSettingsAndBubbles(currentLang);
   generateCategoryFilterButtons(currentLang);
-  buildMainShowroomGrid(currentLang, currentFilterCategoryId);
+  buildMainShowroomGrid(currentLang, currentFilterCategoryId, false);
 }
 
 /* ========== INIT ========== */
@@ -197,7 +211,7 @@ if (langSelect) {
   });
 }
 
-// Render immediately using fallbacks so there is ZERO waiting or flickering on load!
+// Render immediately using localStorage cache or fallbacks!
 render();
 
 onValue(ref(db, 'items'), (snap) => {
@@ -206,7 +220,9 @@ onValue(ref(db, 'items'), (snap) => {
   const newItems = (val && val.length > 0) ? val : fallbackCatalogue;
   if (JSON.stringify(dbData.items) !== JSON.stringify(newItems)) {
     dbData.items = newItems;
-    render();
+    try { localStorage.setItem('dzMobilier_saved_items', JSON.stringify(newItems)); } catch(e){}
+    // Update ONLY the catalog grid smoothly without touching headers or category buttons!
+    buildMainShowroomGrid(currentLang, currentFilterCategoryId, true);
   }
 });
 
@@ -217,7 +233,9 @@ onValue(ref(db, 'categories'), (snap) => {
   if (!val.some(c => c.id === 'cat_all')) val.unshift({ id: "cat_all", labelAr: "الكل", labelFr: "Tout" });
   if (JSON.stringify(dbData.categories) !== JSON.stringify(val)) {
     dbData.categories = val;
-    render();
+    try { localStorage.setItem('dzMobilier_saved_categories', JSON.stringify(val)); } catch(e){}
+    // Update ONLY the filter buttons without wiping the product cards!
+    generateCategoryFilterButtons(currentLang);
   }
 });
 
@@ -225,6 +243,8 @@ onValue(ref(db, 'showroomDetails'), (snap) => {
   const newDetails = snap.val() || fallbackDetails;
   if (JSON.stringify(dbData.details) !== JSON.stringify(newDetails)) {
     dbData.details = newDetails;
-    render();
+    try { localStorage.setItem('dzMobilier_saved_details', JSON.stringify(newDetails)); } catch(e){}
+    // Update ONLY the header, hero, and footer text/images without wiping the product grid!
+    pullShowroomSettingsAndBubbles(currentLang);
   }
 });
